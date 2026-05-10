@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研修進捗管理</title>
+<style>
+:root{--bg:#f5f4f1;--sur:#fff;--bd:rgba(0,0,0,0.08);--tx:#141414;--mu:#999;--s1:#378ADD;--s1b:#E6F1FB;--s1d:#185FA5;--s2:#639922;--s2b:#EAF3DE;--s2d:#3B6D11;--s3:#BA7517;--s3b:#FAEEDA;--s3d:#854F0B;--s4:#D85A30;--s4b:#FAECE7;--s4d:#993C1D;--s5:#7F77DD;--s5b:#EEEDFE;--s5d:#534AB7;--s6:#D4537E;--s6b:#FBEAF0;--s6d:#993556;--r:14px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+.screen{display:none;}.screen.active{display:block;}
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;}
+.spinner{width:32px;height:32px;border:2.5px solid var(--bd);border-top-color:var(--tx);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ltxt{font-size:13px;color:var(--mu);}
+#top{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:.35rem;}
+.bmark{width:34px;height:34px;background:var(--tx);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.bmark svg{width:18px;height:18px;stroke:white;}
+.ttl{font-size:22px;font-weight:700;letter-spacing:-.5px;}
+.tsub{font-size:13px;color:var(--mu);margin-bottom:3rem;padding-left:44px;}
+.tcards{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:460px;}
+.tcard{background:var(--sur);border:.5px solid var(--bd);border-radius:var(--r);padding:2rem 1.5rem 1.75rem;text-align:center;cursor:pointer;}
+.tico{margin:0 auto 1.1rem;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.tcard.adm .tico{background:#f0f0ee;}.tcard.stf .tico{background:var(--s1b);}
+.tico svg{width:24px;height:24px;}
+.tlbl{font-size:15px;font-weight:700;margin-bottom:.3rem;}
+.tdsc{font-size:12px;color:var(--mu);line-height:1.5;}
+.tbdg{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--mu);border:.5px solid var(--bd);border-radius:20px;padding:3px 9px;margin-top:.85rem;}
+.ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;}
+.ov.open{display:flex;}
+.modal{background:var(--sur);border-radius:var(--r);padding:2rem;width:90%;max-width:320px;box-shadow:0 24px 64px rgba(0,0,0,.14);}
+.mico{width:48px;height:48px;background:#f0f0ee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;}
+.mico svg{width:22px;height:22px;}
+.modal h2{font-size:17px;font-weight:700;text-align:center;margin-bottom:.35rem;}
+.modal p{font-size:13px;color:var(--mu);text-align:center;margin-bottom:1.5rem;}
+.modal input{width:100%;padding:11px 14px;border:.5px solid var(--bd);border-radius:var(--rs);font-size:15px;font-family:inherit;background:var(--bg);color:var(--tx);outline:none;letter-spacing:2px;margin-bottom:.65rem;}
+.merr{font-size:12px;color:#D85A30;text-align:center;margin-bottom:.65rem;min-height:16px;}
+.mbtns{display:flex;gap:8px;}
+.btn{padding:10px 18px;border-radius:var(--rs);border:.5px solid transparent;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;flex:1;}
+.btn-p{background:var(--tx);color:#fff;}.btn-g{background:var(--bg);color:var(--tx);border-color:var(--bd);}.btn-d{background:#fff0ee;color:#c0392b;border-color:#fcc;}
+.hdr{position:sticky;top:0;background:rgba(255,255,255,.95);border-bottom:.5px solid var(--bd);padding:.85rem 1.5rem;display:flex;align-items:center;gap:.75rem;z-index:10;}
+.hbk{background:none;border:none;cursor:pointer;font-size:13px;color:var(--mu);padding:5px 10px;border-radius:6px;font-family:inherit;display:flex;align-items:center;gap:5px;}
+.hbk svg{width:14px;height:14px;}
+.htl{font-size:15px;font-weight:700;}
+.sync{margin-left:auto;font-size:11px;color:var(--mu);display:flex;align-items:center;gap:4px;}
+.sdot{width:6px;height:6px;border-radius:50%;background:#639922;flex-shrink:0;}
+.sdot.going{background:#BA7517;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.pb{max-width:860px;margin:0 auto;padding:1.5rem;padding-bottom:4rem;}
+.slbl{font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.75rem;}
+.sc{background:var(--sur);border:.5px solid var(--bd);border-radius:var(--rs);padding:1rem;}
+.sn{font-size:28px;font-weight:700;line-height:1;letter-spacing:-1px;}.sl{font-size:11px;color:var(--mu);margin-top:5px;}
+.ar{display:flex;gap:8px;margin-bottom:1.5rem;}
+.ar input{flex:1;padding:10px 14px;border:.5px solid var(--bd);border-radius:var(--rs);font-size:14px;background:var(--sur);color:var(--tx);outline:none;font-family:inherit;}
+.sfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:1.75rem;}
+.sfc{background:var(--sur);border:.5px solid var(--bd);border-radius:var(--r);padding:1.25rem;}
+.sfct{display:flex;align-items:center;gap:10px;margin-bottom:1rem;}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+.av0{background:#E6F1FB;color:#185FA5;}.av1{background:#EAF3DE;color:#3B6D11;}.av2{background:#FAEEDA;color:#854F0B;}.av3{background:#FBEAF0;color:#993556;}.av4{background:#EEEDFE;color:#534AB7;}
+.sfi{flex:1;min-width:0;}.sfn{font-weight:700;font-size:14px;}.sfp{font-size:12px;color:var(--mu);}
+.mb{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-bottom:.85rem;}
+.mf{height:100%;border-radius:2px;}
+.f0{background:#378ADD;}.f1{background:#639922;}.f2{background:#BA7517;}.f3{background:#D4537E;}.f4{background:#7F77DD;}
+.dots{display:flex;gap:5px;}
+.dot{width:9px;height:9px;border-radius:50%;border:1.5px solid;flex-shrink:0;}
+.pws{background:var(--sur);border:.5px solid var(--bd);border-radius:var(--r);padding:1.25rem;}
+.pwr{display:flex;gap:8px;}
+.pwr input{flex:1;padding:9px 12px;border:.5px solid var(--bd);border-radius:var(--rs);font-size:14px;background:var(--bg);color:var(--tx);outline:none;font-family:inherit;}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem;}
+.tab{padding:7px 16px;border-radius:20px;border:.5px solid var(--bd);background:var(--sur);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--tx);}
+.tab.on{background:var(--tx);color:#fff;border-color:var(--tx);}
+.cc{background:var(--sur);border:.5px solid var(--bd);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;overflow-x:auto;}
+.pl{font-size:12px;color:var(--mu);margin-bottom:5px;}
+.pbar{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:1.1rem;}
+.pfil{height:100%;border-radius:3px;background:var(--s1);}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:560px;}
+th{padding:8px 10px;text-align:center;border:.5px solid var(--bd);font-weight:600;font-size:11px;white-space:nowrap;color:var(--mu);background:var(--bg);}
+th.h1{background:var(--s1b);color:var(--s1d);}th.h2{background:var(--s2b);color:var(--s2d);}th.h3{background:var(--s3b);color:var(--s3d);}th.h4{background:var(--s4b);color:var(--s4d);}th.h5{background:var(--s5b);color:var(--s5d);}th.h6{background:var(--s6b);color:var(--s6d);}
+td{padding:7px 10px;border:.5px solid var(--bd);text-align:center;vertical-align:middle;}
+td.mc{text-align:left;font-weight:700;font-size:12px;background:var(--bg);white-space:nowrap;padding-left:14px;}
+td.tc{color:var(--mu);background:var(--bg);font-size:11px;}
+.cb{display:flex;align-items:center;justify-content:center;}
+input[type=checkbox]{width:17px;height:17px;cursor:pointer;flex-shrink:0;}
+input.c1{accent-color:#378ADD;}input.c2{accent-color:#639922;}input.c3{accent-color:#BA7517;}input.c4{accent-color:#D85A30;}input.c5{accent-color:#7F77DD;}input.c6{accent-color:#D4537E;}input.ct{accent-color:#1D9E75;}
+.sub2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.subc{background:var(--sur);border:.5px solid var(--bd);border-radius:var(--r);padding:1.1rem 1.25rem;}
+.itm{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--bd);font-size:13px;}
+.itm:last-child{border-bottom:none;}
+.itm input[type=checkbox]{width:16px;height:16px;}
+.tbar{text-align:center;margin-top:1.5rem;font-size:12px;color:var(--mu);}
+.errbanner{background:#fff0ee;border:.5px solid #fcc;border-radius:var(--rs);padding:.75rem 1rem;font-size:12px;color:#c0392b;margin-bottom:1rem;display:none;}
+@media(max-width:480px){.sg{grid-template-columns:repeat(2,1fr);}.sub2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><div class="ltxt">接続中...</div></div>
+
+<div class="ov" id="pwov">
+  <div class="modal">
+    <div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <h2>管理者ログイン</h2>
+    <p>管理者パスワードを入力してください</p>
+    <input type="password" id="pwi" placeholder="パスワード">
+    <div class="merr" id="pwerr"></div>
+    <div class="mbtns">
+      <button class="btn btn-g" id="pwcancel">キャンセル</button>
+      <button class="btn btn-p" id="pwok">ログイン</button>
+    </div>
+  </div>
+</div>
+
+<div id="top" class="screen">
+  <div class="brand">
+    <div class="bmark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></svg></div>
+    <div class="ttl">研修進捗管理</div>
+  </div>
+  <div class="tsub">新人スタッフの研修チェックリスト</div>
+  <div class="tcards">
+    <div class="tcard adm" id="btn-admin">
+      <div class="tico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg></div>
+      <div class="tlbl">管理者画面</div><div class="tdsc">全員の進捗を<br>確認・管理する</div>
+      <div class="tbdg">🔒 パスワード保護</div>
+    </div>
+    <div class="tcard stf" id="btn-ind">
+      <div class="tico"><svg viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+      <div class="tlbl">個人チェック</div><div class="tdsc">自分の研修を<br>チェックする</div>
+      <div class="tbdg">✓ パスワード不要</div>
+    </div>
+  </div>
+</div>
+
+<div id="admin" class="screen">
+  <div class="hdr">
+    <button class="hbk" id="adm-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>戻る</button>
+    <div class="htl">管理者画面</div>
+    <div class="sync"><div class="sdot" id="sd-a"></div><span id="st-a">同期済み</span></div>
+  </div>
+  <div class="pb">
+    <div class="errbanner" id="adm-err"></div>
+    <div class="slbl">サマリー</div><div class="sg" id="sumg"></div>
+    <div class="slbl">スタッフ追加</div>
+    <div class="ar">
+      <input type="text" id="newname" placeholder="新人スタッフ名を入力" maxlength="20">
+      <button class="btn btn-p" style="flex:0;white-space:nowrap;" id="addBtn">追加</button>
+    </div>
+    <div class="slbl">進捗一覧</div><div class="sfg" id="sfg"></div>
+    <div class="slbl">パスワード変更</div>
+    <div class="pws">
+      <div class="pwr">
+        <input type="password" id="newpw" placeholder="新しいパスワード（4文字以上）">
+        <button class="btn btn-p" style="flex:0;white-space:nowrap;" id="chpwBtn">変更</button>
+      </div>
+      <div id="pwmsg" style="font-size:12px;margin-top:8px;min-height:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="individual" class="screen">
+  <div class="hdr">
+    <button class="hbk" id="ind-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>戻る</button>
+    <div class="htl">個人チェック</div>
+    <div class="sync"><div class="sdot" id="sd-i"></div><span id="st-i">同期済み</span></div>
+  </div>
+  <div class="pb"><div class="tabs" id="tabs"></div><div id="clarea"></div></div>
+</div>
+
+<script>
+var PROJECT = 'kenshu-tool-2a437';
+var API_KEY = 'AIzaSyDd1Sq4Shf4OKkpUDenwHRD6xbyCpQYlQI';
+var FS_BASE = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/';
+
+var MENUS = [
+  {menu:'ヘッドスパ',time:'30分',key:'hs30'},
+  {menu:'ヘッドスパ',time:'60分',key:'hs60'},
+  {menu:'ボディケア',time:'60分',key:'bc60'},
+  {menu:'ボディケア',time:'90分',key:'bc90'},
+  {menu:'オイル',time:'60分',key:'oil60'},
+  {menu:'オイル',time:'90分',key:'oil90'},
+  {menu:'オイル',time:'120分',key:'oil120'}
+];
+var STEPS = ['手技入れ','手技テスト','技術研修Jr.','技術テストJr.','指名6本','本デビュー前試験'];
+var EXPS  = ['ブレンドアロマ','症状別施術可否','電話対応','英語対応','頻出筋肉','リンパ系'];
+var TESTS = ['100問（ヘッド）','100問（縦）','100問（横）','筋肉位置テスト','ヘッド小テスト'];
+var TMAIN = MENUS.length * STEPS.length;
+var TALL  = TMAIN + EXPS.length + TESTS.length;
+var SCOLS = ['#378ADD','#639922','#BA7517','#D85A30','#7F77DD','#D4537E'];
+var DEFPW = 'admin1234';
+
+var staffList = [];
+var progCache = {};
+var curId     = null;
+var adminPw   = DEFPW;
+var pollTimer = null;
+
+// ── Firestore REST ──────────────────────────────────────
+// スタッフリストはJSON文字列としてstringValueに格納（配列のネストを回避）
+function fsURL(col, docId) {
+  return FS_BASE + col + '/' + docId + '?key=' + API_KEY;
+}
+
+// 進捗データ用: boolean/stringのフラットなオブジェクト
+function progToFS(obj) {
+  var fields = {};
+  var keys = Object.keys(obj);
+  for (var i = 0; i < keys.length; i++) {
+    var v = obj[keys[i]];
+    if (typeof v === 'boolean') {
+      fields[keys[i]] = {booleanValue: v};
+    } else {
+      fields[keys[i]] = {stringValue: String(v)};
+    }
+  }
+  return {fields: fields};
+}
+
+function progFromFS(doc) {
+  if (!doc || !doc.fields) return {};
+  var obj = {};
+  var keys = Object.keys(doc.fields);
+  for (var i = 0; i < keys.length; i++) {
+    var f = doc.fields[keys[i]];
+    if (f.booleanValue !== undefined) obj[keys[i]] = f.booleanValue;
+    else if (f.stringValue !== undefined) obj[keys[i]] = f.stringValue;
+  }
+  return obj;
+}
+
+// スタッフリストはJSONをstringValueで1フィールドに保存
+function staffListToFS(list) {
+  return {fields: {data: {stringValue: JSON.stringify(list)}}};
+}
+function staffListFromFS(doc) {
+  if (!doc || !doc.fields || !doc.fields.data) return [];
+  try { return JSON.parse(doc.fields.data.stringValue); }
+  catch(e) { return []; }
+}
+
+// 設定(admin pw)
+function settingToFS(key, val) {
+  var fields = {};
+  fields[key] = {stringValue: val};
+  return {fields: fields};
+}
+function settingFromFS(doc, key) {
+  if (!doc || !doc.fields || !doc.fields[key]) return null;
+  return doc.fields[key].stringValue;
+}
+
+function fsGet(col, docId, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', fsURL(col, docId), true);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try { cb(null, JSON.parse(xhr.responseText)); }
+      catch(e) { cb(e, null); }
+    } else if (xhr.status === 404) {
+      cb(null, null);
+    } else {
+      cb(new Error('HTTP ' + xhr.status + ' ' + xhr.responseText), null);
+    }
+  };
+  xhr.onerror = function() { cb(new Error('network error'), null); };
+  xhr.send();
+}
+
+function fsPut(col, docId, body, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('PATCH', fsURL(col, docId), true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function() {
+    if (xhr.status === 200) { if (cb) cb(null); }
+    else { if (cb) cb(new Error('HTTP ' + xhr.status + ' ' + xhr.responseText)); }
+  };
+  xhr.onerror = function() { if (cb) cb(new Error('network error')); };
+  xhr.send(JSON.stringify(body));
+}
+
+function fsDel(col, docId, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('DELETE', fsURL(col, docId), true);
+  xhr.onload = function() { if (cb) cb(null); };
+  xhr.onerror = function() { if (cb) cb(new Error('network error')); };
+  xhr.send();
+}
+
+function showErr(msg) {
+  var el = document.getElementById('adm-err');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ── helpers ─────────────────────────────────────────────
+function cntChecked(prog) {
+  var n = 0, ks = Object.keys(prog);
+  for (var i = 0; i < ks.length; i++) { if (prog[ks[i]] === true) n++; }
+  return n;
+}
+function ini(name) { return name.slice(0, 2); }
+function findStaff(id) {
+  for (var i = 0; i < staffList.length; i++) { if (staffList[i].id === id) return staffList[i]; }
+  return null;
+}
+function syncing(s) {
+  var dot = document.getElementById(s === 'a' ? 'sd-a' : 'sd-i');
+  var txt = document.getElementById(s === 'a' ? 'st-a' : 'st-i');
+  if (dot) { dot.className = 'sdot going'; txt.textContent = '同期中...'; }
+}
+function synced(s) {
+  var dot = document.getElementById(s === 'a' ? 'sd-a' : 'sd-i');
+  var txt = document.getElementById(s === 'a' ? 'st-a' : 'st-i');
+  if (dot) { dot.className = 'sdot'; txt.textContent = '同期済み'; }
+}
+function showScreen(id) {
+  var all = document.querySelectorAll('.screen');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  document.getElementById('loading').style.display = 'none';
+}
+
+// ── polling ─────────────────────────────────────────────
+function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+function loadAll(cb) {
+  fsGet('settings', 'staffList', function(e, doc) {
+    staffList = staffListFromFS(doc);
+    if (!staffList.length) { cb(); return; }
+    var loaded = 0;
+    for (var i = 0; i < staffList.length; i++) {
+      (function(sid) {
+        fsGet('progress', sid, function(e2, pdoc) {
+          progCache[sid] = progFromFS(pdoc);
+          loaded++;
+          if (loaded === staffList.length) cb();
+        });
+      })(staffList[i].id);
+    }
+  });
+}
+
+function startPoll(cb) {
+  stopPoll();
+  cb();
+  pollTimer = setInterval(cb, 6000);
+}
+
+// ── screens ──────────────────────────────────────────────
+function showTop() { stopPoll(); showScreen('top'); }
+
+function showAdmin() {
+  showScreen('admin');
+  showErr('');
+  startPoll(function() { loadAll(function() { renderAdmin(); }); });
+}
+
+function showInd() {
+  showScreen('individual');
+  startPoll(function() {
+    loadAll(function() {
+      if (staffList.length && (!curId || !findStaff(curId))) curId = staffList[0].id;
+      renderInd();
+    });
+  });
+}
+
+// ── admin render ─────────────────────────────────────────
+function renderAdmin() {
+  var total = staffList.length, totalCk = 0, comp = 0;
+  for (var i = 0; i < staffList.length; i++) {
+    var c = cntChecked(progCache[staffList[i].id] || {});
+    totalCk += c; if (c >= TALL) comp++;
+  }
+  var avg = total ? Math.round(totalCk / (total * TALL) * 100) : 0;
+  document.getElementById('sumg').innerHTML =
+    '<div class="sc"><div class="sn">'+total+'</div><div class="sl">スタッフ数</div></div>'+
+    '<div class="sc"><div class="sn">'+avg+'%</div><div class="sl">平均進捗</div></div>'+
+    '<div class="sc"><div class="sn">'+comp+'</div><div class="sl">研修完了</div></div>'+
+    '<div class="sc"><div class="sn">'+(total-comp)+'</div><div class="sl">研修中</div></div>';
+  var sfg = document.getElementById('sfg');
+  if (!staffList.length) { sfg.innerHTML='<div style="color:var(--mu);font-size:14px;">スタッフを追加してください</div>'; synced('a'); return; }
+  var html = '';
+  for (var i = 0; i < staffList.length; i++) {
+    var s = staffList[i], prog = progCache[s.id] || {}, c = cntChecked(prog), pct = Math.round(c/TALL*100);
+    var dh = '';
+    for (var si = 0; si < STEPS.length; si++) {
+      var done = true;
+      for (var mi = 0; mi < MENUS.length; mi++) { if (!prog['main_'+MENUS[mi].key+'_'+si]) { done=false; break; } }
+      dh += '<div class="dot" style="border-color:'+SCOLS[si]+';background:'+(done?SCOLS[si]:'transparent')+'"></div>';
+    }
+    html += '<div class="sfc"><div class="sfct">'+
+      '<div class="av av'+(i%5)+'">'+ini(s.name)+'</div>'+
+      '<div class="sfi"><div class="sfn">'+s.name+'</div><div class="sfp">'+c+' / '+TALL+' 項目（'+pct+'%）</div></div>'+
+      '<button class="btn btn-d" style="flex:0;padding:5px 10px;font-size:11px;" data-del="'+s.id+'">削除</button>'+
+      '</div><div class="mb"><div class="mf f'+(i%5)+'" style="width:'+pct+'%"></div></div>'+
+      '<div class="dots">'+dh+'</div></div>';
+  }
+  sfg.innerHTML = html;
+  var dels = sfg.querySelectorAll('[data-del]');
+  for (var d = 0; d < dels.length; d++) {
+    dels[d].addEventListener('click', function() { removeStaff(this.getAttribute('data-del')); });
+  }
+  synced('a');
+}
+
+function addStaff() {
+  var inp = document.getElementById('newname');
+  var name = inp.value.trim();
+  if (!name) return;
+  if (staffList.length >= 5) { alert('最大5人まで登録できます'); return; }
+  var id = 'staff_' + Date.now();
+  var nl = [];
+  for (var i = 0; i < staffList.length; i++) nl.push(staffList[i]);
+  nl.push({id: id, name: name});
+  syncing('a');
+  showErr('');
+  fsPut('settings', 'staffList', staffListToFS(nl), function(e1) {
+    if (e1) { showErr('保存に失敗しました: ' + e1.message); synced('a'); return; }
+    fsPut('progress', id, {fields: {}}, function(e2) {
+      inp.value = '';
+      loadAll(function() { renderAdmin(); synced('a'); });
+    });
+  });
+}
+
+function removeStaff(id) {
+  if (!confirm('このスタッフを削除しますか？')) return;
+  var nl = [];
+  for (var i = 0; i < staffList.length; i++) { if (staffList[i].id !== id) nl.push(staffList[i]); }
+  syncing('a');
+  fsPut('settings', 'staffList', staffListToFS(nl), function(e) {
+    if (e) { showErr('削除に失敗しました: ' + e.message); synced('a'); return; }
+    fsDel('progress', id, function() {
+      delete progCache[id];
+      if (curId === id) curId = null;
+      loadAll(function() { renderAdmin(); synced('a'); });
+    });
+  });
+}
+
+function changePw() {
+  var v = document.getElementById('newpw').value.trim();
+  var m = document.getElementById('pwmsg');
+  if (!v || v.length < 4) { m.style.color='#D85A30'; m.textContent='4文字以上で入力してください'; return; }
+  syncing('a');
+  fsPut('settings', 'admin', settingToFS('password', v), function(e) {
+    if (e) { m.style.color='#D85A30'; m.textContent='変更に失敗しました'; synced('a'); return; }
+    adminPw = v; synced('a');
+    document.getElementById('newpw').value = '';
+    m.style.color='#639922'; m.textContent='パスワードを変更しました';
+    setTimeout(function() { m.textContent=''; }, 3000);
+  });
+}
+
+// ── individual ───────────────────────────────────────────
+function renderInd() {
+  var tabs = document.getElementById('tabs');
+  if (!staffList.length) {
+    tabs.innerHTML='<div style="color:var(--mu);font-size:14px;">管理者画面でスタッフを追加してください</div>';
+    document.getElementById('clarea').innerHTML=''; return;
+  }
+  if (!curId || !findStaff(curId)) curId = staffList[0].id;
+  var html = '';
+  for (var i = 0; i < staffList.length; i++) {
+    html += '<button class="tab'+(staffList[i].id===curId?' on':'')+'" data-sid="'+staffList[i].id+'">'+staffList[i].name+'</button>';
+  }
+  tabs.innerHTML = html;
+  var btns = tabs.querySelectorAll('[data-sid]');
+  for (var b = 0; b < btns.length; b++) {
+    btns[b].addEventListener('click', function() { curId=this.getAttribute('data-sid'); renderInd(); });
+  }
+  renderChecklist();
+}
+
+function renderChecklist() {
+  var prog = progCache[curId] || {}, mc = 0;
+  for (var mi = 0; mi < MENUS.length; mi++) {
+    for (var si = 0; si < STEPS.length; si++) { if (prog['main_'+MENUS[mi].key+'_'+si]===true) mc++; }
+  }
+  var mpct = Math.round(mc/TMAIN*100), prevMenu='', rows='';
+  for (var mi = 0; mi < MENUS.length; mi++) {
+    var r=MENUS[mi], cells='';
+    for (var si=0; si<STEPS.length; si++) {
+      var k='main_'+r.key+'_'+si;
+      cells+='<td><div class="cb"><input type="checkbox" class="c'+(si+1)+'"'+(prog[k]===true?' checked':'')+' data-key="'+k+'"></div></td>';
+    }
+    if (r.menu!==prevMenu) {
+      var span=0; for(var x=0;x<MENUS.length;x++){if(MENUS[x].menu===r.menu)span++;}
+      rows+='<tr><td class="mc" rowspan="'+span+'">'+r.menu+'</td><td class="tc">'+r.time+'</td>'+cells+'</tr>';
+      prevMenu=r.menu;
+    } else { rows+='<tr><td class="tc">'+r.time+'</td>'+cells+'</tr>'; }
+  }
+  var eh='';
+  for (var ei=0;ei<EXPS.length;ei++) {
+    var ek='exp_'+ei;
+    eh+='<div class="itm"><input type="checkbox" class="ct"'+(prog[ek]===true?' checked':'')+' data-key="'+ek+'"><span>'+EXPS[ei]+'</span></div>';
+  }
+  var th='';
+  for (var ti=0;ti<TESTS.length;ti++) {
+    var tk='test_'+ti;
+    th+='<div class="itm"><input type="checkbox"'+(prog[tk]===true?' checked':'')+' data-key="'+tk+'"><span>'+TESTS[ti]+'</span></div>';
+  }
+  var ac=cntChecked(prog), apct=Math.round(ac/TALL*100);
+  var area=document.getElementById('clarea');
+  area.innerHTML=
+    '<div class="cc"><div class="pl">技術研修：'+mc+' / '+TMAIN+' 完了（'+mpct+'%）</div>'+
+    '<div class="pbar"><div class="pfil" style="width:'+mpct+'%"></div></div>'+
+    '<table><thead><tr><th style="text-align:left;">メニュー</th><th>時間</th>'+
+    '<th class="h1">①手技入れ</th><th class="h2">②手技テスト</th>'+
+    '<th class="h3">③技術研修Jr.</th><th class="h4">④技術テストJr.</th>'+
+    '<th class="h5">⑤指名6本</th><th class="h6">⑥本デビュー前試験</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="sub2">'+
+    '<div class="subc"><div class="slbl" style="margin-bottom:.75rem;">説明項目</div>'+eh+'</div>'+
+    '<div class="subc"><div class="slbl" style="margin-bottom:.75rem;">テスト項目</div>'+th+'</div>'+
+    '</div><div class="tbar">総合進捗：'+ac+' / '+TALL+' 項目（'+apct+'%）</div>';
+
+  var cbs=area.querySelectorAll('input[type=checkbox]');
+  for (var ci=0;ci<cbs.length;ci++) {
+    cbs[ci].addEventListener('change', function() {
+      var k=this.getAttribute('data-key');
+      var p={};
+      var src=progCache[curId]||{};
+      var ks=Object.keys(src);
+      for(var x=0;x<ks.length;x++) p[ks[x]]=src[ks[x]];
+      p[k]=this.checked;
+      progCache[curId]=p;
+      syncing('i');
+      fsPut('progress', curId, progToFS(p), function() { synced('i'); });
+    });
+  }
+  synced('i');
+}
+
+// ── events ───────────────────────────────────────────────
+document.getElementById('btn-admin').addEventListener('click', function() {
+  document.getElementById('pwi').value='';
+  document.getElementById('pwerr').textContent='';
+  document.getElementById('pwov').classList.add('open');
+  setTimeout(function(){document.getElementById('pwi').focus();},100);
+});
+document.getElementById('btn-ind').addEventListener('click', showInd);
+document.getElementById('pwcancel').addEventListener('click', function(){document.getElementById('pwov').classList.remove('open');});
+document.getElementById('pwok').addEventListener('click', function() {
+  var v=document.getElementById('pwi').value;
+  if (v===adminPw) { document.getElementById('pwov').classList.remove('open'); showAdmin(); }
+  else { document.getElementById('pwerr').textContent='パスワードが違います'; document.getElementById('pwi').value=''; document.getElementById('pwi').focus(); }
+});
+document.getElementById('pwi').addEventListener('keydown', function(e){if(e.key==='Enter')document.getElementById('pwok').click();});
+document.getElementById('adm-back').addEventListener('click', showTop);
+document.getElementById('ind-back').addEventListener('click', showTop);
+document.getElementById('addBtn').addEventListener('click', addStaff);
+document.getElementById('newname').addEventListener('keydown', function(e){if(e.key==='Enter')addStaff();});
+document.getElementById('chpwBtn').addEventListener('click', changePw);
+
+// ── init ─────────────────────────────────────────────────
+fsGet('settings', 'admin', function(e, doc) {
+  var pw = settingFromFS(doc, 'password');
+  adminPw = pw ? pw : DEFPW;
+  showScreen('top');
+});
+</script>
+</body>
+</html>
